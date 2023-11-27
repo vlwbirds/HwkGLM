@@ -1,0 +1,29 @@
+---
+title: "HwkGLM"
+format: html
+editor: visual
+---
+
+## Model Hawk GLM
+
+This is an attempt to build code for a generalize linear model. The data used are predator-prey reaction behaviors collected by launching a model hawk at birds in the Amazon in Madre de Dios, Peru. Reactions include: no response, call, alarm, sing, dive, hide, freeze, visual search
+
+### Installing Packages
+
+```{r}
+#install.packages("glmm")
+
+library(glmm)
+library(here)
+library(tidyverse)
+
+```
+
+## Loading Hawk Data
+
+```{r}
+set_here("/Users/vincent/Documents/GitHub/HwkGLM")
+
+hwk_data <- read_csv(here("data/hwkdata.csv"))
+view(hwk_data)
+```
