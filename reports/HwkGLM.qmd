@@ -22,8 +22,26 @@ library(tidyverse)
 ## Loading Hawk Data
 
 ```{r}
-set_here("/Users/vincent/Documents/GitHub/HwkGLM")
-
-hwk_data <- read_csv(here("data/hwkdata.csv"))
+hwk_data <- read_csv(here("data/hwkGLM.csv"))
 view(hwk_data)
+hwk_na <- na.omit(hwk_data)
+
 ```
+
+## Generalized Linear Model 1 (larger index)
+
+```{r}
+model <- glm(Mid_Join_Index1 ~ Mid_Join, data = hwk_data, family = poisson(link = "log"))
+model
+```
+
+## Generalized Linear Model 2 (conservative)
+
+```{r}
+model <- glm(Mid_Join_Index2 ~ Mid_Join, data = hwk_data, family = poisson(link = "log"))
+model
+```
+
+response \~ species + veg density + foraging + sociality
+
+Sociality: MSF, singles, pairs, leks, SSF (single species group)
