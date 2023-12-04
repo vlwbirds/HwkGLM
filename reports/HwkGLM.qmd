@@ -23,8 +23,7 @@ library(tidyverse)
 
 ```{r}
 hwk_data <- read_csv(here("data/hwkGLM.csv"))
-view(hwk_data)
-hwk_na <- na.omit(hwk_data)
+tibble(hwk_data)
 
 ```
 
@@ -38,8 +37,8 @@ model
 ## Generalized Linear Model 2 (conservative)
 
 ```{r}
-model <- glm(Mid_Join_Index2 ~ Mid_Join, data = hwk_data, family = poisson(link = "log"))
-model
+model <- glm(Mid_Join_Index2 ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense, data = hwk_data, family = poisson(link = "log"))
+summary(model)
 ```
 
 response \~ species + veg density + foraging + sociality
