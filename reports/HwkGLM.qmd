@@ -22,25 +22,62 @@ library(tidyverse)
 ## Loading Hawk Data
 
 ```{r}
-hwk_data <- read_csv(here("data/hwkGLM.csv"))
-tibble(hwk_data)
+hwk_GLM <- read_csv(here("data/hwkGLM.csv"))
+view(hwk_GLM)
 
+hwk_data <- read_csv(here("data/hwkdata.csv")) %>% 
+  mutate(Mid_Vocal_Index = as.numeric(Mid_Vocal_Index))
+view(hwk_data)
 ```
 
 ## Generalized Linear Model 1 (larger index)
 
 ```{r}
-model <- glm(Mid_Join_Index1 ~ Mid_Join, data = hwk_data, family = poisson(link = "log"))
-model
+model1 <- glm(Mid_Join_Index1 ~ Mid_Join, data = hwk_GLM, family = poisson(link = "log"))
+summary(model1)
 ```
 
 ## Generalized Linear Model 2 (conservative)
 
 ```{r}
-model <- glm(Mid_Join_Index2 ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense, data = hwk_data, family = poisson(link = "log"))
-summary(model)
+model2 <- glm(Mid_Join_Index2 ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense, data = hwk_GLM, family = poisson(link = "log"))
+summary(model2)
+# update to multinomial distrubution
 ```
 
 response \~ species + veg density + foraging + sociality
 
 Sociality: MSF, singles, pairs, leks, SSF (single species group)
+
+## Model with hwk_data
+
+```{r}
+
+```
+
+## Create Binomial Column for Alarm in Dataframes
+
+```{r}
+hwk_GLM$alarm <- ifelse(hwk_GLM$Mid_Join_Index2==4,1,0)
+View(hwk_GLM)
+
+hwk_data$alarm <- ifelse(hwk_data$Mid_Vocal_Index==2,1,0)
+view(hwk_data)
+```
+
+```{r}
+model <- glm(alarm ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense, data = hwk_GLM, family = binomial(link = "logit"))
+summary(model)
+```
+
+```{r}
+model <- glm(alarm ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense, data = hwk_GLM, family = binomial(link = "logit"))
+summary(model)
+```
+
+## Treatment Significance - Control v Hawk
+
+```{r}
+trt <- glm(alarm ~ hwk, data = hwk_data, family = binomial(link = "logit"))
+summary(trt)             
+```

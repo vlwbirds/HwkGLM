@@ -7,11 +7,12 @@ library(MASS)
 simulate_and_fit <- function(n, effect_size) {
   # Simulate data with specified effect size
   sim_data <- hwk_data
-  sim_data$Social_Index <- rnorm(nrow(sim_data), mean = effect_size * sim_data$Social_Index)
+  sim_data$Social_Index <- rbinom(nrow(sim_data), mean = effect_size * sim_data$Social_Index)
 
   # Fit the model
-  model <- glm(Mid_Join_Index2 ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense,
-               family = poisson(link = "log"), data = sim_data)
+  # model <- glm(Mid_Join_Index2 ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense,
+    #           family = poisson(link = "log"), data = sim_data)
+  model <- glm(alarm ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense, data = hwk_data, family = binomial(link = "logit"))
 
   # Check if the coefficient for Social_Index is statistically significant
   p_value <- summary(model)$coefficients["Social_Index", "Pr(>|z|)"]
@@ -21,7 +22,7 @@ simulate_and_fit <- function(n, effect_size) {
 }
 
 # Set values for effect size, alpha, and power
-effect_size <- 0.25
+effect_size <- 0.2
 alpha <- 0.05
 power <- 0.80
 
