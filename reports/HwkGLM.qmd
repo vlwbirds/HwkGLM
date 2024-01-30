@@ -26,7 +26,20 @@ hwk_GLM <- read_csv(here("data/hwkGLM.csv"))
 view(hwk_GLM)
 
 hwk_data <- read_csv(here("data/hwkdata.csv")) %>% 
-  mutate(Mid_Vocal_Index = as.numeric(Mid_Vocal_Index))
+  mutate(Flock_size = as.numeric(Flock_size)) %>% 
+  mutate(Post_Dist = as.numeric(Post_Dist)) %>% 
+  mutate(Veg_under_height = as.numeric(Veg_under_height)) %>% 
+  mutate(Veg_mid_low = as.numeric(Veg_mid_low)) %>% 
+  mutate(Veg_mid_high = as.numeric(Veg_mid_high)) %>% 
+  mutate(Veg_can_low = as.numeric(Veg_can_low)) %>% 
+  mutate(Veg_can_high = as.numeric(Veg_can_high)) %>% 
+  mutate(Rad_Avg_Dense = as.numeric(Rad_Avg_Dense)) %>% 
+  mutate(across(c(Species, Mid_Vocal, Mid_Behav_2, Mid_Join, Sex), factor))
+         #across(c(Veg_mid_low, Veg_mid_high, Veg_can_low, Veg_can_high, Rad_Avg_Dense), numeric))
+  
+str(hwk_data)
+
+
 view(hwk_data)
 ```
 
@@ -58,10 +71,10 @@ Sociality: MSF, singles, pairs, leks, SSF (single species group)
 ## Create Binomial Column for Alarm in Dataframes
 
 ```{r}
-hwk_GLM$alarm <- ifelse(hwk_GLM$Mid_Join_Index2==4,1,0)
+hwk_GLM$alarm <- ifelse(hwk_GLM$Mid_Join_Index2 == 4,1,0)
 View(hwk_GLM)
 
-hwk_data$alarm <- ifelse(hwk_data$Mid_Vocal_Index==2,1,0)
+hwk_data$alarm <- ifelse(hwk_data$Mid_Vocal_Index == 2,1,0)
 view(hwk_data)
 ```
 
@@ -71,7 +84,34 @@ summary(model)
 ```
 
 ```{r}
-model <- glm(alarm ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense, data = hwk_GLM, family = binomial(link = "logit"))
+model <- glm(alarm ~ Social_Index + 
+               SpeciesID + 
+               Pre_Height + 
+               Pre_Dense, 
+             data = hwk_GLM, family = binomial(link = "logit"))
+summary(model)
+```
+
+## Modeling with full hwk_data
+
+```{r}
+# selecting only hwk treatment
+hwk_subset <- subset(hwk_data, hwk == 1)
+hwk_subset$alarm <- ifelse(hwk_subset$Mid_Vocal_Index==2,1,0)
+view(hwk_subset)
+
+# GLM model
+model <- glm(alarm ~ SppID +
+               sexID + 
+               Flock_size + 
+               Flight_proximity + 
+               Pre_Height + 
+               Veg_under_height + 
+               Veg_mid_low + 
+               Veg_mid_high + 
+               Rad_Avg_Dense + 
+               Pre_Dense, 
+             data = hwk_subset, family = binomial(link = "logit"))
 summary(model)
 ```
 
