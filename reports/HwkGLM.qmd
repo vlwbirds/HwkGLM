@@ -104,12 +104,12 @@ view(hwk_subset)
 model <- glm(alarm ~ SppID +
                sexID + 
                Flock_size + 
-               Flight_proximity + 
-               Pre_Height + 
-               Veg_under_height + 
-               Veg_mid_low + 
-               Veg_mid_high + 
-               Rad_Avg_Dense + 
+              # Flight_proximity + 
+               #Pre_Height + 
+               #Veg_under_height + 
+              # Veg_mid_low + 
+               #Veg_mid_high + 
+              # Rad_Avg_Dense + 
                Pre_Dense, 
              data = hwk_subset, family = binomial(link = "logit"))
 summary(model)
@@ -118,6 +118,13 @@ summary(model)
 ## Treatment Significance - Control v Hawk
 
 ```{r}
-trt <- glm(alarm ~ hwk, data = hwk_data, family = binomial(link = "logit"))
+trt <- glm(alarm ~ as.factor(hwk), data = hwk_data, family = binomial(link = "logit"))
 summary(trt)             
+```
+
+```{r}
+head(hwk_data)
+
+counts <- table(hwk_data$hwk)
+barplot(counts)
 ```
