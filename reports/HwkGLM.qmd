@@ -26,6 +26,7 @@ hwk_GLM <- read_csv(here("data/hwkGLM.csv"))
 view(hwk_GLM)
 
 hwk_data <- read_csv(here("data/hwkdata.csv")) %>% 
+  mutate(Social_Index = as.numeric(Social_Index)) %>% 
   mutate(Flock_size = as.numeric(Flock_size)) %>% 
   mutate(Post_Dist = as.numeric(Post_Dist)) %>% 
   mutate(Veg_under_height = as.numeric(Veg_under_height)) %>% 
@@ -34,7 +35,7 @@ hwk_data <- read_csv(here("data/hwkdata.csv")) %>%
   mutate(Veg_can_low = as.numeric(Veg_can_low)) %>% 
   mutate(Veg_can_high = as.numeric(Veg_can_high)) %>% 
   mutate(Rad_Avg_Dense = as.numeric(Rad_Avg_Dense)) %>% 
-  mutate(across(c(Species, Mid_Vocal, Mid_Behav_2, Mid_Join, Sex), factor))
+  mutate(across(c(hwk, Species, Mid_Vocal, Mid_Behav_2, Mid_Join, Sex), factor))
          #across(c(Veg_mid_low, Veg_mid_high, Veg_can_low, Veg_can_high, Rad_Avg_Dense), numeric))
   
 str(hwk_data)
@@ -68,7 +69,7 @@ Sociality: MSF, singles, pairs, leks, SSF (single species group)
 
 ```
 
-## Create Binomial Column for Alarm in Dataframes
+## Create Alarm in Dataframes
 
 ```{r}
 hwk_GLM$alarm <- ifelse(hwk_GLM$Mid_Join_Index2 == 4,1,0)
@@ -77,6 +78,8 @@ View(hwk_GLM)
 hwk_data$alarm <- ifelse(hwk_data$Mid_Vocal_Index == 2,1,0)
 view(hwk_data)
 ```
+
+## Social Index GLM Model
 
 ```{r}
 model <- glm(alarm ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense, data = hwk_GLM, family = binomial(link = "logit"))
@@ -118,13 +121,73 @@ summary(model)
 ## Treatment Significance - Control v Hawk
 
 ```{r}
-trt <- glm(alarm ~ as.factor(hwk), data = hwk_data, family = binomial(link = "logit"))
+trt <- glm(alarm ~ hwk, data = hwk_data, family = binomial(link = "logit"))
 summary(trt)             
 ```
 
-```{r}
-head(hwk_data)
+## Bar Plot of Treatment Versus Control Alarm Percentage
 
-counts <- table(hwk_data$hwk)
-barplot(counts)
+```{r}
+# Calculate percentage of positive reactions for treatment and control
+percentage_treatment <- mean(hwk_data$alarm[hwk_data$hwk == 1]) * 100
+percentage_control <- mean(hwk_data$alarm[hwk_data$hwk == 0]) * 100
+
+# Calculate sample size for treatment and control
+sample_size_treatment <- sum(hwk_data$hwk == 1)
+sample_size_control <- sum(hwk_data$hwk == 0)
+
+# Create a new data frame for plotting
+plot_data <- data.frame(
+  Group = c("Treatment", "Control"),
+  Percentage = c(percentage_treatment, percentage_control),
+  SampleSize = c(sample_size_treatment, sample_size_control)
+)
+
+# Create a bar plot
+ggplot(plot_data, aes(x = Group, y = Percentage, fill = Group)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = paste("n =", SampleSize)), position = position_dodge(width = 0.9), vjust = -0.5) +
+  labs(title = "Percentage of Positive Reactions by Group",
+       y = "Alarm Percentage",
+       x = "Group") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0, 50)) +
+  theme_minimal()
+
+
+```
+
+## Social Structure Alarm Plot
+
+```{r}
+# percentages of alarm by social structure
+percent_solo <- mean(hwk_data$alarm[hwk_data$Social_Index == 0], na.rm = TRUE) * 100
+percent_pair <- mean(hwk_data$alarm[hwk_data$Social_Index == 1], na.rm = TRUE) * 100
+percent_competitive <- mean(hwk_data$alarm[hwk_data$Social_Index == 2], na.rm = TRUE) * 100
+percent_ssf <- mean(hwk_data$alarm[hwk_data$Social_Index == 3], na.rm = TRUE) * 100
+percent_msf <- mean(hwk_data$alarm[hwk_data$Social_Index == 4], na.rm = TRUE) * 100
+
+# Sample sizes
+sample_solo <- sum(hwk_data$Social_Index == 0, na.rm = TRUE)
+sample_pair <- sum(hwk_data$Social_Index == 1, na.rm = TRUE)
+sample_competitve <- sum(hwk_data$Social_Index == 2, na.rm = TRUE)
+sample_ssf <- sum(hwk_data$Social_Index == 3, na.rm = TRUE)
+sample_msf <- sum(hwk_data$Social_Index == 4, na.rm = TRUE)
+
+# New dataframe for plotting
+plot_data <- data.frame(
+ Group = factor(c("Solo", "Pair", "Competitive", "Single-species Flock", "Mixed-species Flock"),
+                levels = c("Solo", "Pair", "Competitive", "Single-species Flock", "Mixed-species Flock")),  
+ Percentage = c(percent_solo, percent_pair, percent_competitive, percent_ssf, percent_msf),
+  SampleSize = c(sample_solo, sample_pair, sample_competitve, sample_ssf, sample_msf)
+)
+
+# Create a bar plot
+ggplot(plot_data, aes(x = Group, y = Percentage, fill = Group)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = paste("n =", SampleSize)), position = position_dodge(width = 0.9), vjust = -0.5) +
+  labs(title = "Percentage of Positive Reactions by Sociality",
+       y = "Alarm Percentage",
+       x = "Group") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0, 50)) +
+  theme_minimal()
 ```
