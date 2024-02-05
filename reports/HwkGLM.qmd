@@ -165,14 +165,14 @@ hwk_subset$alarm <- as.numeric(ifelse(hwk_subset$Mid_Vocal_Index==2,1,0))
 # percentages of alarm by social structure
 percent_solo <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 0], na.rm = TRUE) * 100
 percent_pair <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 1], na.rm = TRUE) * 100
-percent_competitive <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 2], na.rm = TRUE) * 100
+percent_comp <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 2], na.rm = TRUE) * 100
 percent_ssf <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 3], na.rm = TRUE) * 100
 percent_msf <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 4], na.rm = TRUE) * 100
 
 # Sample sizes
 sample_solo <- sum(hwk_subset$Social_Index == 0, na.rm = TRUE)
 sample_pair <- sum(hwk_subset$Social_Index == 1, na.rm = TRUE)
-sample_competitve <- sum(hwk_subset$Social_Index == 2, na.rm = TRUE)
+sample_comp <- sum(hwk_subset$Social_Index == 2, na.rm = TRUE)
 sample_ssf <- sum(hwk_subset$Social_Index == 3, na.rm = TRUE)
 sample_msf <- sum(hwk_subset$Social_Index == 4, na.rm = TRUE)
 
@@ -180,8 +180,8 @@ sample_msf <- sum(hwk_subset$Social_Index == 4, na.rm = TRUE)
 plot_data <- data.frame(
  Group = factor(c("Solo", "Pair", "Competitive", "Single-species Flock", "Mixed-species Flock"),
                 levels = c("Solo", "Pair", "Competitive", "Single-species Flock", "Mixed-species Flock")),  
- Percentage = c(percent_solo, percent_pair, percent_competitive, percent_ssf, percent_msf),
-  SampleSize = c(sample_solo, sample_pair, sample_competitve, sample_ssf, sample_msf)
+ Percentage = c(percent_solo, percent_pair, percent_comp, percent_ssf, percent_msf),
+  SampleSize = c(sample_solo, sample_pair, sample_comp, sample_ssf, sample_msf)
 )
 
 # Create a bar plot
