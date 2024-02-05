@@ -158,19 +158,23 @@ ggplot(plot_data, aes(x = Group, y = Percentage, fill = Group)) +
 ## Social Structure Alarm Plot
 
 ```{r}
+#subsetting for only treatment
+hwk_subset <- subset(hwk_data, hwk == 1)
+hwk_subset$alarm <- as.numeric(ifelse(hwk_subset$Mid_Vocal_Index==2,1,0))
+
 # percentages of alarm by social structure
-percent_solo <- mean(hwk_data$alarm[hwk_data$Social_Index == 0], na.rm = TRUE) * 100
-percent_pair <- mean(hwk_data$alarm[hwk_data$Social_Index == 1], na.rm = TRUE) * 100
-percent_competitive <- mean(hwk_data$alarm[hwk_data$Social_Index == 2], na.rm = TRUE) * 100
-percent_ssf <- mean(hwk_data$alarm[hwk_data$Social_Index == 3], na.rm = TRUE) * 100
-percent_msf <- mean(hwk_data$alarm[hwk_data$Social_Index == 4], na.rm = TRUE) * 100
+percent_solo <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 0], na.rm = TRUE) * 100
+percent_pair <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 1], na.rm = TRUE) * 100
+percent_competitive <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 2], na.rm = TRUE) * 100
+percent_ssf <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 3], na.rm = TRUE) * 100
+percent_msf <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 4], na.rm = TRUE) * 100
 
 # Sample sizes
-sample_solo <- sum(hwk_data$Social_Index == 0, na.rm = TRUE)
-sample_pair <- sum(hwk_data$Social_Index == 1, na.rm = TRUE)
-sample_competitve <- sum(hwk_data$Social_Index == 2, na.rm = TRUE)
-sample_ssf <- sum(hwk_data$Social_Index == 3, na.rm = TRUE)
-sample_msf <- sum(hwk_data$Social_Index == 4, na.rm = TRUE)
+sample_solo <- sum(hwk_subset$Social_Index == 0, na.rm = TRUE)
+sample_pair <- sum(hwk_subset$Social_Index == 1, na.rm = TRUE)
+sample_competitve <- sum(hwk_subset$Social_Index == 2, na.rm = TRUE)
+sample_ssf <- sum(hwk_subset$Social_Index == 3, na.rm = TRUE)
+sample_msf <- sum(hwk_subset$Social_Index == 4, na.rm = TRUE)
 
 # New dataframe for plotting
 plot_data <- data.frame(
