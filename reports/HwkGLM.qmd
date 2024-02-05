@@ -198,3 +198,65 @@ summary(model)
 
 str(hwk_subset)
 ```
+
+## Social Index % by Group and Species
+
+```{r}
+# Assuming hwk_data is your data frame
+library(ggplot2)
+library(dplyr)
+
+# Convert "alarm" column to numeric, replacing non-numeric values with NA
+hwk_data$alarm <- as.numeric(as.character(hwk_data$alarm))
+
+# Filter out non-numeric or missing values in the "alarm" column
+hwk_data_filtered <- hwk_data %>%
+  filter(!is.na(alarm)) %>%
+  filter(!is.na(Social_Index)) %>%
+  filter(is.numeric(alarm))
+
+# Convert Social_Index to numeric
+hwk_data_filtered$Social_Index <- as.numeric(as.character(hwk_data_filtered$Social_Index))
+
+# Filter out rows where "Species" is exactly "#N/A_species"
+hwk_data_filtered <- hwk_data_filtered %>%
+  filter(Species != "#N/A_species")
+
+# Calculate overall mean percentages by social structure
+overall_means <- hwk_data_filtered %>%
+  group_by(Social_Index) %>%
+  summarize(Overall_Mean = mean(alarm, na.rm = TRUE) * 100)
+
+# Calculate mean percentages by social structure and species
+species_means <- hwk_data_filtered %>%
+  group_by(Social_Index, Species) %>%
+  summarize(Species_Mean = mean(alarm, na.rm = TRUE) * 100)
+
+# Calculate mean percentages by unique species within each social index
+unique_species_means <- hwk_data_filtered %>%
+  group_by(Social_Index, Species) %>%
+  summarize(Unique_Species_Mean = n() / length(unique(hwk_data_filtered$Trial_ID)) * 100)
+
+# Order the levels of Social_Index
+ordered_levels <- c(0, 1, 2, 3, 4)
+overall_means$Social_Index <- factor(overall_means$Social_Index, levels = ordered_levels)
+species_means$Social_Index <- factor(species_means$Social_Index, levels = ordered_levels)
+unique_species_means$Social_Index <- factor(unique_species_means$Social_Index, levels = ordered_levels)
+
+# Merge the data frames to ensure all levels are represented
+combined_data <- merge(overall_means, species_means, by = c("Social_Index"))
+combined_data <- merge(combined_data, unique_species_means, by = c("Social_Index", "Species"), all.x = TRUE)
+
+# Create a stacked bar plot
+ggplot(combined_data, aes(x = Social_Index, y = Unique_Species_Mean, fill = Species)) +
+  geom_col(position = "fill", color = "white") +
+  geom_text(aes(label = sprintf("%.1f%%", Unique_Species_Mean)), position = position_fill(vjust = 0.5)) +
+  labs(title = "Stacked Bar Plot of Alarm Percentage by Social Index and Species",
+       x = "Social Index",
+       y = "Alarm Percentage") +
+  scale_x_discrete(labels = c("0" = "Solo", "1" = "Pair", "2" = "Competitive", "3" = "SSF", "4" = "MSF")) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0, 1)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+
+```
