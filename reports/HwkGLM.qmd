@@ -195,6 +195,23 @@ ggplot(plot_data, aes(x = Group, y = Percentage, fill = Group)) +
   theme_minimal()
 ```
 
+## Social Structure By Species Alarming
+
+```{r}
+alarm_subset <- subset(hwk_subset, alarm == 1)
+social_group <- alarm_subset %>% 
+  group_by(Social_Index, Species) %>%
+  summarize(total_alarm = sum(alarm)) %>% 
+  group_by(Social_Index) %>% 
+  mutate(proportion_alarm = total_alarm / sum(total_alarm))
+  
+  
+view(social_group)
+
+```
+
+## GLM Alarming by Social Index
+
 ```{r}
 hwk_data$alarm_factor <- as.factor(hwk_data$alarm)
 model <- glm(alarm_factor ~ Social_Index, data = hwk_subset, family = binomial(link = "logit"))
@@ -206,12 +223,8 @@ str(hwk_subset)
 ## Social Index % by Group and Species
 
 ```{r}
-# Assuming hwk_data is your data frame
-library(ggplot2)
-library(dplyr)
-
-# Convert "alarm" column to numeric, replacing non-numeric values with NA
-hwk_data$alarm <- as.numeric(as.character(hwk_data$alarm))
+# Convert "alarm" column to numeric
+hwk_data$alarm <- as.numeric(hwk_data$alarm)
 
 # Filter out non-numeric or missing values in the "alarm" column
 hwk_data_filtered <- hwk_data %>%
