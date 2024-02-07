@@ -53,8 +53,15 @@ summary(model1)
 ## Generalized Linear Model 2 (conservative)
 
 ```{r}
-model2 <- glm(Mid_Join_Index2 ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense, data = hwk_GLM, family = poisson(link = "log"))
+#remove competitive
+hwk_glm_1 <- hwk_GLM[hwk_GLM$Social_Index != "2", ]
+
+model2 <- glm(Mid_Join_Index2 ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense, data = hwk_glm_1, family = poisson(link = "log"))
 summary(model2)
+
+model3 <- glm(alarm ~ Social_Index, data = hwk_glm_1, family = binomial(link = "logit"))
+summary(model3)
+view(hwk_glm_1)
 # update to multinomial distrubution
 ```
 
@@ -81,6 +88,7 @@ view(hwk_data)
 ## Social Index GLM Model
 
 ```{r}
+
 model <- glm(alarm ~ Social_Index + SpeciesID + Pre_Height + Pre_Dense, data = hwk_GLM, family = binomial(link = "logit"))
 summary(model)
 ```
@@ -204,9 +212,15 @@ social_group <- alarm_subset %>%
   summarize(total_alarm = sum(alarm)) %>% 
   group_by(Social_Index) %>% 
   mutate(proportion_alarm = total_alarm / sum(total_alarm))
-  
-  
+
 view(social_group)
+
+# multiply by proportions
+percent_solo <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 0], na.rm = TRUE) * 100
+percent_pair <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 1], na.rm = TRUE) * 100
+percent_comp <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 2], na.rm = TRUE) * 100
+percent_ssf <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 3], na.rm = TRUE) * 100
+percent_msf <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 4], na.rm = TRUE) * 100
 
 ```
 
