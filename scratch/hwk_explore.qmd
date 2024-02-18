@@ -1,0 +1,48 @@
+---
+title: "hwk_explore"
+format: html
+editor: visual
+---
+
+## Libraries & Data
+
+```{r}
+library(here)
+library(tidyverse)
+
+# all hwk data
+hwk_data <- read_csv(here("data/hwkdata.csv"))
+
+# data with all flock members in many to one arrangement based on timestamp
+hwk_net <- read_csv(here("data/hwk_net.csv"))
+view(hwk_net)
+```
+
+## Flock Abundance
+
+```{r}
+# remove NA
+df_filtered <- hwk_net %>% 
+  filter(!is.na(flock))
+
+# convert flock to factor
+df_filtered$flock <- as_factor(df_filtered$flock)
+
+# calculate abundance and richness
+result <- df_filtered %>%
+  group_by(timestamp, tar, alarm) %>%
+  summarise(richness = n_distinct(flock),
+            abundance = n()) %>%
+  ungroup()
+
+# join abundance and richeness to trial type
+merged_df <- inner_join(result, hwk_data %>% 
+                          select(Timestamp_yymmdd_hhmmss, hwk), by = c("timestamp" = "Timestamp_yymmdd_hhmmss"))
+
+view(merged_df)
+
+df_hwk_filtered <- merged_df %>% 
+  filter(hwk != 0)
+
+
+```
