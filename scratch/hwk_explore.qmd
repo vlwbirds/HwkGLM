@@ -41,8 +41,56 @@ merged_df <- inner_join(result, hwk_data %>%
 
 view(merged_df)
 
+# filter out control
 df_hwk_filtered <- merged_df %>% 
   filter(hwk != 0)
 
+# Calculate the alarm percentage for each unique richness value
+richness_alarm <- df_hwk_filtered %>%
+  group_by(richness) %>%
+  summarise(alarm_percentage = (sum(alarm) / n()) * 100) %>%
+  ungroup()
+
+# Calculate the alarm percentage for each unique abundance value
+abundance_alarm <- df_hwk_filtered %>%
+  group_by(abundance) %>%
+  summarise(alarm_percentage = (sum(alarm) / n()) * 100) %>%
+  ungroup()
+
+# Merge richness and abundance alarm percentage dataframes
+combined_df <- merge(richness_alarm, abundance_alarm, by = "alarm_percentage", all = TRUE, suffixes = c("_richness", "_abundance"))
+
+# Calculate sample size for richness and abundance
+richness_sample_size <- combined_df %>%
+  group_by(richness) %>%
+  summarise(sample_size = n())
+
+abundance_sample_size <- combined_df %>%
+  group_by(abundance) %>%
+  summarise(sample_size = n())
+
+# Merge sample sizes with the combined dataframe
+combined_df <- left_join(combined_df, richness_sample_size, by = "richness") %>%
+  left_join(abundance_sample_size, by = "abundance") %>%
+  mutate(sample_size_richness = ifelse(is.na(sample_size.x), 0, sample_size.x),
+         sample_size_abundance = ifelse(is.na(sample_size.y), 0, sample_size.y))
+
+# Calculate standard error for alarm percentage
+combined_df <- combined_df %>%
+  mutate(alarm_percentage_se = sd(alarm_percentage) / sqrt(n()))
+
+# Plot both richness and abundance on the same plot with different colors
+plot_combined <- ggplot(combined_df, aes(x = richness, y = alarm_percentage)) +
+  geom_point(aes(color = "Richness"), size = 3) +
+  geom_smooth(aes(color = "Richness"), method = "lm", se = FALSE) +
+  geom_point(aes(x = abundance, y = alarm_percentage, color = "Abundance"), size = 3) +
+  geom_smooth(aes(x = abundance, y = alarm_percentage, color = "Abundance"), method = "lm", se = FALSE) +
+  scale_color_manual(values = c("blue", "red")) +
+  labs(x = "Count", y = "Alarm Percentage") +
+  scale_x_continuous(breaks = 1:20) +  # Set x-axis breaks to be in single increments of 1 to 20
+  scale_y_continuous(breaks = seq(0, 100, by = 10)) +  # Set y-axis breaks to be in increments of 10 from 0 to 100
+
+# Show the plot
+print(plot_combined)
 
 ```
