@@ -79,16 +79,17 @@ combined_df <- left_join(combined_df, richness_sample_size, by = "richness") %>%
 combined_df <- combined_df %>%
   mutate(alarm_percentage_se = sd(alarm_percentage) / sqrt(n()))
 
-# Plot both richness and abundance on the same plot with different colors
+# Plot both richness and abundance on the same plot with softer colors
 plot_combined <- ggplot(combined_df, aes(x = richness, y = alarm_percentage)) +
   geom_point(aes(color = "Richness"), size = 3) +
   geom_smooth(aes(color = "Richness"), method = "lm", se = FALSE) +
   geom_point(aes(x = abundance, y = alarm_percentage, color = "Abundance"), size = 3) +
   geom_smooth(aes(x = abundance, y = alarm_percentage, color = "Abundance"), method = "lm", se = FALSE) +
-  scale_color_manual(values = c("blue", "red")) +
-  labs(x = "Count", y = "Alarm Percentage") +
+  scale_color_manual(values = c("Richness" = "#8c96c6", "Abundance" = "#fc8d59"), name = "Category") + # softer shades of blue and red
+  labs(x = "Adundance and Richness", y = "Alarm Percentage") +
   scale_x_continuous(breaks = 1:20) +  # Set x-axis breaks to be in single increments of 1 to 20
   scale_y_continuous(breaks = seq(0, 100, by = 10)) +  # Set y-axis breaks to be in increments of 10 from 0 to 100
+  theme_minimal()
 
 # Show the plot
 print(plot_combined)
