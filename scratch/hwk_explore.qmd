@@ -7,6 +7,7 @@ editor: visual
 ## Libraries & Data
 
 ```{r}
+library(RColorBrewer)
 library(here)
 library(tidyverse)
 
@@ -38,8 +39,6 @@ result <- df_filtered %>%
 # join abundance and richeness to trial type
 merged_df <- inner_join(result, hwk_data %>% 
                           select(Timestamp_yymmdd_hhmmss, hwk), by = c("timestamp" = "Timestamp_yymmdd_hhmmss"))
-
-view(merged_df)
 
 # filter out control
 df_hwk_filtered <- merged_df %>% 
@@ -165,6 +164,8 @@ print(plot_combined)
 
 ```
 
+## Debugging Diversity
+
 ```{r}
 # Print out unique values of flock for each timestamp
 for (i in 1:nrow(df_hwk_diversity)) {
@@ -174,5 +175,95 @@ for (i in 1:nrow(df_hwk_diversity)) {
   cat("Timestamp:", timestamp, "\n")
   cat("Unique Flock Values:", paste(unique_flock, collapse = ", "), "\n\n")
 }
+
+```
+
+## Abundance and Richness by Target Species
+
+```{r}
+# Remove NA values from the flock column
+df_filtered <- hwk_net %>% 
+  filter(!is.na(flock))
+
+# Convert flock column to factor
+df_filtered$flock <- as.factor(df_filtered$flock)
+
+# Inner join df_filtered with hwk_data
+merged_df <- inner_join(df_filtered, hwk_data %>% 
+                          select(Timestamp_yymmdd_hhmmss, hwk), by = c("timestamp" = "Timestamp_yymmdd_hhmmss"))
+# Step 1: Filter merged_df to only include rows where hwk equals 1
+df_flock <- merged_df %>%
+  filter(hwk == 1)
+
+df_flock <- df_flock %>% 
+  filter(!is.na(flock))
+
+# Step 1: Group by timestamp and tar, then calculate richness and abundance
+result <- df_filtered %>%
+  group_by(timestamp, tar, alarm) %>%
+  summarise(richness = n_distinct(flock),
+            abundance = n()) %>%
+  ungroup()
+
+# Step 1: Calculate alarm percentage for each unique richness value for each species
+alarm_percentage_richness <- result %>%
+  group_by(tar, richness) %>%
+  summarise(alarm_percentage = mean(alarm)) %>%
+  ungroup()
+
+# Step 2: Calculate alarm percentage for each unique abundance value for each species
+alarm_percentage_abundance <- result %>%
+  group_by(tar, abundance) %>%
+  summarise(alarm_percentage = mean(alarm)) %>%
+  ungroup()
+
+# Step 3: Combine the results into a single dataframe
+combined_df <- full_join(alarm_percentage_richness, alarm_percentage_abundance, by = "tar")
+
+# Show the combined dataframe
+print(combined_df)
+
+# Combine alarm percentage data for richness and abundance
+combined_data <- bind_rows(
+  mutate(alarm_percentage_richness, variable = "Richness"),
+  mutate(alarm_percentage_abundance, variable = "Abundance")
+)
+
+# Combine richness and abundance into a single variable
+combined_data <- combined_data %>%
+  mutate(richness_abundance = ifelse(variable == "Richness", richness, abundance))
+
+# Group the data by tar and check if all alarm percentages are zero
+filtered_data <- combined_data %>%
+  group_by(tar) %>%
+  filter(!all(alarm_percentage == 0)) %>%
+  ungroup()
+
+# Define a color palette with 10 distinct colors
+color_palette <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999", "#000000")
+
+
+# Define colors for richness and abundance
+richness_color <- "blue"
+abundance_color <- "red"
+
+# Plot regressions based on Alarm Percentage on y and richness/abundance on the x, faceted by tar
+plot <- ggplot(filtered_data, aes(x = richness, y = alarm_percentage)) +
+  geom_point(data = filtered_data[filtered_data$variable == "Richness",], aes(color = "Richness", shape = "Richness"), size = 3) + # Increase size for richness points
+  geom_smooth(data = filtered_data[filtered_data$variable == "Richness",], aes(x = richness, color = "Richness"), method = "lm", se = FALSE, linetype = "dashed") +
+  geom_point(data = filtered_data[filtered_data$variable == "Abundance",], aes(x = abundance, y = alarm_percentage, color = "Abundance", shape = "Abundance")) +
+  geom_smooth(data = filtered_data[filtered_data$variable == "Abundance",], aes(x = abundance, y = alarm_percentage, color = "Abundance"), method = "lm", se = FALSE, linetype = "dotted") +
+  labs(x = "Richness and Abundance", y = "Alarm Percentage", color = "Variable") +
+  scale_color_manual(values = c(Richness = richness_color, Abundance = abundance_color), 
+                     labels = c(Richness = "Richness", Abundance = "Abundance")) +
+  scale_shape_manual(values = c(Richness = 15, Abundance = 16), 
+                     labels = c(Richness = "Richness", Abundance = "Abundance")) +
+  theme_minimal() +
+  facet_wrap(~ tar, scales = "free") +
+  theme(legend.text = element_text(face = "bold"),
+        strip.text = element_text(face = "bold"))  # Make strip text bold
+
+# Print the plot
+print(plot)
 
 ```
