@@ -239,10 +239,6 @@ filtered_data <- combined_data %>%
   filter(!all(alarm_percentage == 0)) %>%
   ungroup()
 
-# Define a color palette with 10 distinct colors
-color_palette <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999", "#000000")
-
-
 # Define colors for richness and abundance
 richness_color <- "blue"
 abundance_color <- "red"
