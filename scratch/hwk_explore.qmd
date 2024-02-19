@@ -95,3 +95,84 @@ plot_combined <- ggplot(combined_df, aes(x = richness, y = alarm_percentage)) +
 print(plot_combined)
 
 ```
+
+## Flock Diversity Plot
+
+work in progress
+
+```{r}
+# Function to calculate Shannon's Diversity Index
+calculate_shannon_diversity <- function(data) {
+  total_count <- sum(data)
+  proportions <- data / total_count
+  shannon_index <- -sum(proportions * log(proportions))
+  return(shannon_index)
+}
+
+# Remove NA values from the flock column
+df_filtered <- hwk_net %>% 
+  filter(!is.na(flock))
+
+# Convert flock column to factor
+df_filtered$flock <- as.factor(df_filtered$flock)
+
+# Inner join df_filtered with hwk_data
+merged_df <- inner_join(df_filtered, hwk_data %>% 
+                          select(Timestamp_yymmdd_hhmmss, hwk), by = c("timestamp" = "Timestamp_yymmdd_hhmmss"))
+
+# Step 1: Filter merged_df to only include rows where hwk equals 1
+df_flock <- merged_df %>%
+  filter(hwk == 1)
+
+# Step 2: Calculate Shannon Diversity Index for each timestamp
+df_hwk_diversity <- df_flock %>%
+  group_by(timestamp) %>%
+  summarise(shannon_diversity = {
+    if (length(unique(flock)) > 1) {
+      # Calculate Shannon Diversity Index for each unique flock value
+      shannon_indices <- sapply(unique(flock), function(f) calculate_shannon_diversity(table(flock[flock == f])))
+      # Average Shannon Diversity Index
+      mean(shannon_indices, na.rm = TRUE)
+    } else if (length(unique(flock)) == 1) {
+      # If there is only one unique flock value, set diversity to 0
+      calculate_shannon_diversity(table(flock))
+    } else {
+      # If there are no flock values, set diversity to NaN
+      NaN
+    }
+  },
+  alarm = first(alarm)) %>%
+  ungroup()
+
+
+# Step 3: Calculate alarm percentage based on unique Shannon Index values
+alarm_percentage <- df_hwk_diversity %>%
+  group_by(shannon_diversity) %>%
+  summarise(alarm_percentage = mean(alarm)) %>%
+  ungroup()
+
+# Step 4: Plot alarm percentage on the y-axis and diversity on the x-axis
+plot_combined <- ggplot(alarm_percentage, aes(x = shannon_diversity, y = alarm_percentage)) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Shannon Diversity Index", y = "Alarm Percentage") +
+  scale_x_continuous(breaks = seq(0, 4, by = 0.5)) +  # Set x-axis breaks
+  scale_y_continuous(breaks = seq(0, 1, by = 0.1)) +  # Set y-axis breaks
+  theme_minimal()
+
+# Show the plot
+print(plot_combined)
+
+```
+
+```{r}
+# Print out unique values of flock for each timestamp
+for (i in 1:nrow(df_hwk_diversity)) {
+  timestamp <- df_hwk_diversity$timestamp[i]
+  flock_values <- df_flock[df_flock$timestamp == timestamp, "flock"]
+  unique_flock <- unique(flock_values)
+  cat("Timestamp:", timestamp, "\n")
+  cat("Unique Flock Values:", paste(unique_flock, collapse = ", "), "\n\n")
+}
+
+```
