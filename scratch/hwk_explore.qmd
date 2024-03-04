@@ -7,9 +7,11 @@ editor: visual
 ## Libraries & Data
 
 ```{r}
+library(igraph)
 library(RColorBrewer)
 library(here)
 library(tidyverse)
+library(viridis)
 
 # all hwk data
 hwk_data <- read_csv(here("data/hwkdata.csv"))
@@ -262,4 +264,131 @@ plot <- ggplot(filtered_data, aes(x = richness, y = alarm_percentage)) +
 # Print the plot
 print(plot)
 
+```
+
+## Network Analysis
+
+```{r}
+
+#select dataframe
+data <- hwk_net
+
+# Convert "na" strings to actual NA values
+data[data == "na"] <- NA
+
+# Filter out flock with NA values
+data <- data[!is.na(data$flock), ]
+view(data)
+
+# Extract species from tar and flock columns
+species <- unique(c(data$tar, data$flock))
+
+# Create a data frame for edges
+edges <- data %>%
+  filter(!is.na(tar) & !is.na(flock)) %>%
+  select(tar, flock) %>%
+  rename(from = tar, to = flock)
+
+# Create an igraph object
+g <- graph_from_data_frame(edges, directed = FALSE, vertices = species)
+
+# Define a random color palette
+set.seed(123)  # Set seed for reproducibility
+n_colors <- length(species)
+palette <- sample(colors(), n_colors)  # Generate random colors
+
+# Create a data frame for nodes
+nodes <- data.frame(name = species, color = palette)
+
+# Plot the network
+plot_network <- function(g, nodes) {
+  # Plot the network
+  plot(g, 
+       layout = layout_with_fr(g),
+       vertex.color = nodes$color[match(V(g)$name, nodes$name)],
+       vertex.label.color = "black",
+       vertex.label.cex = 1.2, # Increase label size
+       vertex.label.font = 2,  # Bold font
+       vertex.size = 5,
+       edge.color = "gray",
+       vertex.label.dist = 0.9) # Offset labels from points
+  
+  # Add legend
+  legend("bottomright", legend = species, fill = palette, title = "Species")
+}
+
+# Plot the network
+plot_network(g, nodes)
+
+```
+
+## Network Debug
+
+```{r}
+# Load required libraries
+library(dplyr)
+
+# Read the data
+data <- read.csv("your_dataset.csv")
+
+# Remove NA values
+data <- na.omit(data)
+view(data)
+
+# Extract unique species from tar and flock columns
+unique_species <- unique(c(data$flock))
+
+# Print the number of unique species
+print(length(unique_species))
+
+# Load required libraries
+library(igraph)
+library(ggplot2)
+library(dplyr)
+
+# Read the data
+data <- read.csv("your_dataset.csv")
+
+# Print the number of rows in the original data
+print(nrow(data))
+
+# Remove NA values
+data <- na.omit(data)
+
+# Print the number of rows after removing NA values
+print(nrow(data))
+
+# Combine tar with flock (one-to-many relationship)
+edges <- data %>%
+  select(-timestamp) %>%
+  pivot_longer(cols = c(tar, flock),
+               names_to = "species_type",
+               values_to = "species") %>%
+  filter(!is.na(species))
+
+# Print the number of rows after combining tar with flock
+print(nrow(edges))
+
+# Create an igraph object
+g <- graph_from_data_frame(edges, directed = FALSE)
+
+# Print the number of nodes in the graph
+print(vcount(g))
+
+# Remove NA values only from the flock column
+data <- data %>% filter(!is.na(flock))
+
+# Combine tar with flock (one-to-many relationship)
+edges <- data %>%
+  select(-timestamp) %>%
+  pivot_longer(cols = c(tar, flock),
+               names_to = "species_type",
+               values_to = "species") %>%
+  filter(!is.na(species))
+
+# Create an igraph object
+g <- graph_from_data_frame(edges, directed = FALSE)
+
+# Print the number of nodes in the graph
+print(vcount(g))
 ```
