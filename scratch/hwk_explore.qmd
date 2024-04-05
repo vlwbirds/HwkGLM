@@ -19,9 +19,15 @@ hwk_data <- read_csv(here("data/hwkdata.csv"))
 # data with all flock members in many to one arrangement based on timestamp
 hwk_net <- read_csv(here("data/hwk_net.csv"))
 view(hwk_net)
+
+hwk_flock <- read_csv(here("data/hwk_flock.csv"))
+view(hwk_flock)
+
+hwk_abundance <- read_csv(here("data/hwk_abundance.csv"))
+view(hwk_abundance)
 ```
 
-## Flock Abundance
+## Flock Abundance & Richness
 
 ```{r}
 # remove NA
@@ -391,4 +397,103 @@ g <- graph_from_data_frame(edges, directed = FALSE)
 
 # Print the number of nodes in the graph
 print(vcount(g))
+```
+
+## Abundance and Richness by Social Group
+
+```{r}
+
+
+# Read df
+data <- hwk_abundance
+
+# Convert "na" strings to actual NA values
+data[data == "na"] <- NA
+
+# Filter out flock with NA values
+data <- data[!is.na(data$group), ]
+
+# Calculate abundance and richness for each group type and timestamp
+group_data <- data %>%
+  group_by(timestamp, group) %>%
+  summarise(richness = n_distinct(flock),
+            abundance = n()) %>%
+  ungroup()
+
+# Calculate alarm percentage for each group type
+alarm_percentage <- data %>%
+  group_by(group) %>%
+  summarise(alarm_percentage = (sum(alarm) / n()) * 100) %>%
+  ungroup()
+
+# Combine abundance and richness with alarm %
+combined_data <- merge(group_data, alarm_percentage, by = "group", all.x = TRUE)
+
+# Merge alarm column from original data based on timestamp
+combined_data <- merge(combined_data, data[, c("timestamp", "alarm")], by = "timestamp", all.x = TRUE)
+
+# Calculate alarm % based on group type and richness
+alarm_by_richness <- combined_data %>%
+  group_by(group, richness) %>%
+  summarise(alarm_percentage = (sum(alarm) / n()) * 100) %>%
+  ungroup()
+
+# Calculate alarm % based on group type and abundance
+alarm_by_abundance <- combined_data %>%
+  group_by(group, abundance) %>%
+  summarise(alarm_percentage = (sum(alarm) / n()) * 100) %>%
+  ungroup()
+
+# Create plots for each group type
+plots <- lapply(unique(combined_data$group), function(grp) {
+  
+  # Filter data for the current group type
+  group_richness_data <- alarm_by_richness %>% filter(group == grp)
+  group_abundance_data <- alarm_by_abundance %>% filter(group == grp)
+  
+  # Plot abundance vs. alarm percentage
+  abundance_plot <- ggplot(group_abundance_data, aes(x = abundance, y = alarm_percentage)) +
+    geom_point(size = 3) +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(title = paste("Abundance vs. Alarm Percentage for", grp),
+         x = "Abundance",
+         y = "Alarm Percentage") +
+    theme_minimal()
+  
+  # Plot richness vs. alarm percentage
+  richness_plot <- ggplot(group_richness_data, aes(x = richness, y = alarm_percentage)) +
+    geom_point(size = 3) +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(title = paste("Richness vs. Alarm Percentage for", grp),
+         x = "Richness",
+         y = "Alarm Percentage") +
+    theme_minimal()
+  
+  return(list(abundance_plot = abundance_plot, richness_plot = richness_plot))
+})
+
+# Print the plots
+for (i in seq_along(plots)) {
+  print(plots[[i]]$abundance_plot)
+  print(plots[[i]]$richness_plot)
+}
+
+```
+
+```{r}
+abundance_plot <- ggplot(group_alarm_data, aes(x = abundance, y = alarm_percentage)) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = paste("Abundance vs. Alarm Percentage for", grp),
+       x = "Abundance",
+       y = "Alarm Percentage") +
+  theme_minimal()
+
+# Print group_alarm_data before plotting
+print(group_alarm_data)
+
+# Print the abundance plot
+print(abundance_plot)
+
+combined_data <- merge(group_data, alarm_percentage, by = "group", all.x = TRUE)
 ```
