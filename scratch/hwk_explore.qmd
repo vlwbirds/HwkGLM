@@ -451,31 +451,25 @@ plots <- lapply(unique(combined_data$group), function(grp) {
   group_richness_data <- alarm_by_richness %>% filter(group == grp)
   group_abundance_data <- alarm_by_abundance %>% filter(group == grp)
   
-  # Plot abundance vs. alarm percentage
-  abundance_plot <- ggplot(group_abundance_data, aes(x = abundance, y = alarm_percentage)) +
-    geom_point(size = 3) +
-    geom_smooth(method = "lm", se = FALSE) +
-    labs(title = paste("Abundance vs. Alarm Percentage for", grp),
-         x = "Abundance",
-         y = "Alarm Percentage") +
+  # Plot richness and abundance on the same plot
+  combined_plot <- ggplot() +
+    geom_point(data = group_richness_data, aes(x = richness, y = alarm_percentage, color = "Richness"), size = 3) +
+    geom_smooth(data = group_richness_data, aes(x = richness, y = alarm_percentage, color = "Richness"), method = "lm", se = FALSE) +
+    geom_point(data = group_abundance_data, aes(x = abundance, y = alarm_percentage, color = "Abundance"), size = 3) +
+    geom_smooth(data = group_abundance_data, aes(x = abundance, y = alarm_percentage, color = "Abundance"), method = "lm", se = FALSE) +
+    labs(title = paste("Richness and Abundance vs. Alarm Percentage for", grp),
+         x = "Richness and Abundance",
+         y = "Alarm Percentage",
+         color = "Category") +
+    scale_color_manual(values = c("Richness" = "blue", "Abundance" = "red"), name = "Category") +
     theme_minimal()
   
-  # Plot richness vs. alarm percentage
-  richness_plot <- ggplot(group_richness_data, aes(x = richness, y = alarm_percentage)) +
-    geom_point(size = 3) +
-    geom_smooth(method = "lm", se = FALSE) +
-    labs(title = paste("Richness vs. Alarm Percentage for", grp),
-         x = "Richness",
-         y = "Alarm Percentage") +
-    theme_minimal()
-  
-  return(list(abundance_plot = abundance_plot, richness_plot = richness_plot))
+  return(combined_plot)
 })
 
 # Print the plots
 for (i in seq_along(plots)) {
-  print(plots[[i]]$abundance_plot)
-  print(plots[[i]]$richness_plot)
+  print(plots[[i]])
 }
 
 ```
