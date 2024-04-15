@@ -37,6 +37,7 @@ hwk_data <- read_csv(here("data/hwkdata.csv")) %>%
   mutate(across(c(Social_Index, hwk, Species, Mid_Vocal, Mid_Behav_2, Mid_Join, Sex), factor))
          #across(c(Veg_mid_low, Veg_mid_high, Veg_can_low, Veg_can_high, Rad_Avg_Dense), numeric))
   
+hwk_data$Social_Index [hwk_data$Social_Index == "#N/A"] <- NA
 str(hwk_data)
 
 
