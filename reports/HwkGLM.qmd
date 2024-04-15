@@ -108,7 +108,6 @@ summary(model)
 # selecting only hwk treatment
 hwk_subset <- subset(hwk_data, hwk == 1)
 hwk_subset$alarm <- as.factor(ifelse(hwk_subset$Mid_Vocal_Index==2,1,0))
-view(hwk_subset)
 
 # GLM model
 model <- glm(alarm ~ SppID +
@@ -186,10 +185,10 @@ sample_msf <- sum(hwk_subset$Social_Index == 4, na.rm = TRUE)
 
 # New dataframe for plotting
 plot_data <- data.frame(
- Group = factor(c("Solo", "Pair", "Competitive", "Single-species Flock", "Mixed-species Flock"),
-                levels = c("Solo", "Pair", "Competitive", "Single-species Flock", "Mixed-species Flock")),  
- Percentage = c(percent_solo, percent_pair, percent_comp, percent_ssf, percent_msf),
-  SampleSize = c(sample_solo, sample_pair, sample_comp, sample_ssf, sample_msf)
+ Group = factor(c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive"),
+                levels = c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive")),  
+ Percentage = c(percent_solo, percent_pair, percent_ssf, percent_msf, percent_comp),
+  SampleSize = c(sample_solo, sample_pair, sample_ssf, sample_msf, sample_comp)
 )
 
 # Create a bar plot
@@ -227,11 +226,20 @@ percent_msf <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 4], na.rm = TRUE
 ## GLM Alarming by Social Index
 
 ```{r}
-hwk_data$alarm_factor <- as.factor(hwk_data$alarm)
-model <- glm(alarm_factor ~ Social_Index, data = hwk_subset, family = binomial(link = "logit"))
+# subset to only hawk trials
+hwk_subset <- subset(hwk_data, hwk == 1)
+
+# model
+model <- glm(alarm ~ Social_Index, data = hwk_subset, family = binomial(link = "logit"))
 summary(model)
 
 str(hwk_subset)
+```
+
+## GLM - Social Index, Competitive Removed
+
+```{r}
+
 ```
 
 ## Social Index % by Group and Species
