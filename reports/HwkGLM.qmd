@@ -70,12 +70,6 @@ response \~ species + veg density + foraging + sociality
 
 Sociality: MSF, singles, pairs, leks, SSF (single species group)
 
-## Model with hwk_data
-
-```{r}
-
-```
-
 ## Create Alarm in Dataframes
 
 ```{r}
@@ -224,23 +218,69 @@ percent_msf <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 4], na.rm = TRUE
 
 ```
 
-## GLM Alarming by Social Index
+## GLM Alarming by Social Index (factor)
 
 ```{r}
 # subset to only hawk trials
 hwk_subset <- subset(hwk_data, hwk == 1)
 
 # model
-model <- glm(alarm ~ Social_Index, data = hwk_subset, family = binomial(link = "logit"))
+model <- glm(Alarm ~ Social_Index, data = hwk_subset, family = binomial(link = "logit"))
 summary(model)
 
-str(hwk_subset)
+
 ```
 
-## GLM - Social Index, Competitive Removed
+## GLM - Social Index (numeric)
 
 ```{r}
+# subset to only hawk trials
+hwk_subset <- subset(hwk_data, hwk == 1)
 
+# change Social_Index to numeric
+social_numeric <- hwk_subset %>% 
+  mutate(Social_Index = as.numeric(Social_Index))
+
+# model
+model <- glm(Alarm ~ Social_Index, data = social_numeric, family = binomial(link = "logit"))
+summary(model)
+
+
+```
+
+## GLM - Social Index (factor), Competitive Removed
+
+```{r}
+# subset to only hawk trials
+hwk_subset <- subset(hwk_data, hwk == 1)
+hwk_subset_narm <- hwk_subset[!is.na(hwk_subset$Social_Index), ]
+
+# remove competitive
+hwk_no_comp <- subset(hwk_subset_narm, Social_Index != 2)
+
+# model
+model <- glm(Alarm ~ Social_Index, data = hwk_no_comp, family = binomial(link = "logit"))
+summary(model)
+```
+
+## GLM - Social Index (numeric), Competitive Removed
+
+```{r}
+# subset to only hawk trials
+hwk_subset <- subset(hwk_data, hwk == 1)
+
+# change Social_Index to numeric
+social_numeric <- hwk_subset %>% 
+  mutate(Social_Index = as.numeric(Social_Index))
+
+# remove competitive
+hwk_no_comp <- subset(social_numeric, Social_Index != 4)
+
+str(hwk_no_comp)
+view(hwk_no_comp)
+# model
+model <- glm(Alarm ~ Social_Index, data = hwk_no_comp, family = binomial(link = "logit"))
+summary(model)
 ```
 
 ## Social Index % by Group and Species
