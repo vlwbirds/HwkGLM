@@ -12,9 +12,10 @@ This is an attempt to build code for a generalize linear model. The data used ar
 
 ```{r}
 #install.packages("glmm")
-
+install.packages("MuMIn")
 library(glmm)
 library(here)
+library(MuMIn)
 library(tidyverse)
 
 ```
@@ -28,6 +29,7 @@ view(hwk_GLM)
 hwk_data <- read_csv(here("data/hwkdata.csv")) %>% 
   mutate(Flock_size = as.numeric(Flock_size)) %>% 
   mutate(Post_Dist = as.numeric(Post_Dist)) %>% 
+  mutate(Veg_dense_under_avg = as.numeric(Veg_dense_under_avg)) %>% 
   mutate(Veg_under_height = as.numeric(Veg_under_height)) %>% 
   mutate(Veg_mid_low = as.numeric(Veg_mid_low)) %>% 
   mutate(Veg_mid_high = as.numeric(Veg_mid_high)) %>% 
@@ -38,6 +40,7 @@ hwk_data <- read_csv(here("data/hwkdata.csv")) %>%
          #across(c(Veg_mid_low, Veg_mid_high, Veg_can_low, Veg_can_high, Rad_Avg_Dense), numeric))
   
 hwk_data$Social_Index [hwk_data$Social_Index == "#N/A"] <- NA
+hwk_data$Veg_dense_under_avg [hwk_data$Veg_dense_under_avg == "na" ] <- NA
 str(hwk_data)
 
 
@@ -218,7 +221,7 @@ percent_msf <- mean(hwk_subset$alarm[hwk_subset$Social_Index == 4], na.rm = TRUE
 
 ```
 
-## GLM Alarming by Social Index (factor)
+## GLM - Social Index (factor)
 
 ```{r}
 # subset to only hawk trials
@@ -244,8 +247,6 @@ social_numeric <- hwk_subset %>%
 # model
 model <- glm(Alarm ~ Social_Index, data = social_numeric, family = binomial(link = "logit"))
 summary(model)
-
-
 ```
 
 ## GLM - Social Index (factor), Competitive Removed
@@ -253,6 +254,8 @@ summary(model)
 ```{r}
 # subset to only hawk trials
 hwk_subset <- subset(hwk_data, hwk == 1)
+
+# remove na from Social_Index
 hwk_subset_narm <- hwk_subset[!is.na(hwk_subset$Social_Index), ]
 
 # remove competitive
@@ -269,18 +272,127 @@ summary(model)
 # subset to only hawk trials
 hwk_subset <- subset(hwk_data, hwk == 1)
 
-# change Social_Index to numeric
-social_numeric <- hwk_subset %>% 
-  mutate(Social_Index = as.numeric(Social_Index))
+# remove na from Social_Index
+hwk_subset_narm <- hwk_subset[!is.na(hwk_subset$Social_Index), ]
 
 # remove competitive
-hwk_no_comp <- subset(social_numeric, Social_Index != 4)
+hwk_no_comp <- subset(hwk_subset_narm, Social_Index != 2)
 
-str(hwk_no_comp)
-view(hwk_no_comp)
+# change Social_Index to numeric
+social_numeric <- hwk_no_comp %>% 
+  mutate(Social_Index = as.numeric(Social_Index))
+
 # model
-model <- glm(Alarm ~ Social_Index, data = hwk_no_comp, family = binomial(link = "logit"))
+model <- glm(Alarm ~ Social_Index, data = social_numeric, family = binomial(link = "logit"))
 summary(model)
+```
+
+## GLM - SI, Sex
+
+```{r}
+# subset to only hawk trials
+hwk_subset <- subset(hwk_data, hwk == 1)
+
+# remove na from Social_Index
+hwk_subset_narm <- hwk_subset[!is.na(hwk_subset$Social_Index), ]
+
+# change Social_Index to numeric
+social_numeric <- hwk_subset_narm %>% 
+  mutate(Social_Index = as.numeric(Social_Index))
+
+# model
+model <- glm(Alarm ~ Social_Index + sexID, data = social_numeric, family = binomial(link = "logit"))
+summary(model)
+```
+
+```{r}
+head(hwk_subset_narm)
+```
+
+## Remove Unwanted Columns
+
+```{r}
+# subset to only hawk trials
+hwk_subset <- subset(hwk_data, hwk == 1)
+
+# Columns to remove
+unwanted_columns <- c("Timestamp_yymmdd_hhmmss","lat","long","obs1","shooter","Shoot_bird_dist","obs2","Obs2_bird_dist","Habitat_Primary","Habitat_Under_Dom1","Habitat_Under_Dom2","Basal Area 10m","Dbh_largest","Tar_Sp","Tar_Sp2","Species","BirdTree","Sex","Group_Type","Audio_React","hwk","msf","Forage_Tree_height","Rand_360_Degree","Rand_360_Dense_avg...35","Rand_360_Dense_avg...36","Pre_Behav","Pre_Substrate","Mid_Vocal","Mid_Vocal_Index","Mid_Behav","Mid_Behav_1","Dive","Hide_Freeze","Mid_Behav_Index","Mid_Behav_2","Mid_Join","Mid_Join_Index1","Mid_Join_Index2","Mid_Substrate","Post_Vocal","Post_Behav","Post_Substrate","Freeze_Time_sec","Post_Dist","Post_Bird_Dense_Avg","Post_Bird_Height","Veg_can_low","Veg_can_high","5m_dense","5mRad_01","5mRad_02","5mRad_03","5mRad_04","5mRad_05","5mRad_06","5mRad_07","5mRad_08","5mRad_09","5mRad_10")
+
+# Remove unwanted columns using [ ] notation
+df_subset <- hwk_subset[, !names(hwk_subset) %in% unwanted_columns]
+
+# remove na
+df_clean <- na.omit(df_subset)
+
+df_numeric <- df_clean %>% 
+  mutate(Social_Index = as.numeric(Social_Index))
+```
+
+## GLM - All Independent Vars (individual)
+
+```{r}
+
+# List of dependent variables
+independent_vars <- c("Obs1_bird_dist","SppID","sexID","Flock_size","Social_Index","Flight_proximity","Pre_Height","Veg_dense_under_avg","Veg_under_height","Pre_Dense","Pre_Height","Veg_dense_under_avg","Veg_under_height","Pre_Dense","Veg_mid_low","Veg_mid_high","Rad_Avg_Dense")
+
+# List to store model outputs
+model_outputs <- list()
+
+# Filter dataframe to include only rows where Pre_Height values are below 10
+df_filtered <- df_numeric[df_numeric$Pre_Height < 10, ]
+
+# Run GLM models
+for (independent_var in independent_vars) {
+  formula_string <- paste("Alarm ~ `", independent_var, "`", sep = "")
+  model <- glm(as.formula(formula_string), data = df_filtered, family = binomial(link = "logit"))
+  model_outputs[[independent_var]] <- broom::tidy(model)
+}
+
+# Combine model outputs into one large table
+combined_table <- dplyr::bind_rows(model_outputs, .id = "Independent_Variable")
+
+# Print the combined table
+print(combined_table)
+
+view(combined_table)
+```
+
+## GLM - All Independent Var (all combinations)
+
+```{r}
+# List of independent variables (ensure there are no leading or trailing spaces)
+independent_vars <- c("Obs1_bird_dist", "SppID", "sexID", "Flock_size", "Social_Index", "Flight_proximity", 
+                      "Pre_Height", "Veg_dense_under_avg", "Veg_under_height", "Pre_Dense", "Pre_Height", 
+                      "Veg_dense_under_avg", "Veg_under_height", "Pre_Dense", "Veg_mid_low", "Veg_mid_high", 
+                      "Rad_Avg_Dense")
+
+# List to store model outputs
+model_outputs <- list()
+
+# Filter dataframe to include only rows where Pre_Height values are below 10
+df_filtered <- df_clean[df_clean$Pre_Height < 10, ]
+
+# Generate all combinations of independent variables
+all_combinations <- lapply(seq_along(independent_vars), function(n) combn(independent_vars, n, simplify = FALSE))
+
+# Flatten the list of combinations
+all_combinations <- unlist(all_combinations, recursive = FALSE)
+
+# Run GLM models for each combination
+for (vars in all_combinations) {
+  formula_string <- paste("Alarm ~", paste(vars, collapse = " + "))
+  model <- glm(as.formula(formula_string), data = df_filtered, family = binomial(link = "logit"))
+  model_outputs[[paste(vars, collapse = "_")]] <- broom::tidy(model)
+}
+
+# Combine model outputs into one large table
+combined_table <- bind_rows(model_outputs, .id = "Combination")
+
+# Print the combined table
+print(combined_table)
+
+
+
 ```
 
 ## Social Index % by Group and Species
