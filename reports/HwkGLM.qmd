@@ -12,10 +12,16 @@ This is an attempt to build code for a generalize linear model. The data used ar
 
 ```{r}
 #install.packages("glmm")
-install.packages("MuMIn")
+#install.packages("Matrix")
+#install.packages("MuMIn")
+#install.packages("performance")
+
 library(glmm)
 library(here)
+library(lme4)
+library(Matrix)
 library(MuMIn)
+library(performance)
 library(tidyverse)
 
 ```
@@ -292,24 +298,22 @@ summary(model)
 ```{r}
 # subset to only hawk trials
 hwk_subset <- subset(hwk_data, hwk == 1)
+# str(hwk_subset)
 
 # remove na from Social_Index
 hwk_subset_narm <- hwk_subset[!is.na(hwk_subset$Social_Index), ]
 
-# change Social_Index to numeric
-social_numeric <- hwk_subset_narm %>% 
-  mutate(Social_Index = as.numeric(Social_Index))
-
 # model
-model <- glm(Alarm ~ Social_Index + sexID, data = social_numeric, family = binomial(link = "logit"))
+model <- glmer(Alarm ~ (1|Social_Index) + sexID, data = hwk_subset_narm, family = binomial(link = "logit"))
 summary(model)
+icc(model)
 ```
 
 ```{r}
 head(hwk_subset_narm)
 ```
 
-## Remove Unwanted Columns
+## Remove Unwanted Variables
 
 ```{r}
 # subset to only hawk trials
@@ -358,6 +362,8 @@ view(combined_table)
 ```
 
 ## GLM - All Independent Var (all combinations)
+
+This takes A LOT of computing power
 
 ```{r}
 # List of independent variables (ensure there are no leading or trailing spaces)
