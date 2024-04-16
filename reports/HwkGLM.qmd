@@ -370,7 +370,7 @@ independent_vars <- c("Obs1_bird_dist", "SppID", "sexID", "Flock_size", "Social_
 model_outputs <- list()
 
 # Filter dataframe to include only rows where Pre_Height values are below 10
-df_filtered <- df_clean[df_clean$Pre_Height < 10, ]
+df_filtered <- df_numeric[df_numeric$Pre_Height < 10, ]
 
 # Generate all combinations of independent variables
 all_combinations <- lapply(seq_along(independent_vars), function(n) combn(independent_vars, n, simplify = FALSE))
@@ -392,6 +392,13 @@ combined_table <- bind_rows(model_outputs, .id = "Combination")
 print(combined_table)
 
 
+view(combined_table)
+
+# Define the file path using here()
+file_path <- here("output", "all_vars_combined_table.csv")
+
+# Write the combined table to the CSV file
+write.csv(combined_table, file_path, row.names = FALSE)
 
 ```
 
