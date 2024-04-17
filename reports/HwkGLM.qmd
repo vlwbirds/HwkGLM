@@ -304,9 +304,8 @@ hwk_subset <- subset(hwk_data, hwk == 1)
 hwk_subset_narm <- hwk_subset[!is.na(hwk_subset$Social_Index), ]
 
 # model
-model <- glmer(Alarm ~ (1|Social_Index) + sexID, data = hwk_subset_narm, family = binomial(link = "logit"))
+model <- glm(Alarm ~ Social_Index + sexID, data = hwk_subset_narm, family = binomial(link = "logit"))
 summary(model)
-icc(model)
 ```
 
 ```{r}
@@ -464,4 +463,11 @@ ggplot(combined_data, aes(x = Social_Index, y = Unique_Species_Mean, fill = Spec
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
 
+```
+
+## Subset Lek Data
+
+```{r}
+hwk_lek <- subset(hwk_data, hwk_data$Social_Index == 2)
+view(hwk_lek)
 ```
