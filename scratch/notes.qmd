@@ -1,0 +1,21 @@
+---
+title: "notes"
+format: html
+editor: visual
+---
+
+## sp1 & sp2
+
+Ho : y1 - y2 = 0
+
+critical alpha
+
+power = 1 - beta
+
+## Models
+
+aic
+
+bic
+
+VIF - measures how colinear variables are in a model
