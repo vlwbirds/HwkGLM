@@ -53,7 +53,7 @@ hwk_data$Veg_dense_under_avg [hwk_data$Veg_dense_under_avg == "na" ] <- NA
 str(hwk_data)
 
 
-view(hwk_data)
+#view(hwk_data)
 ```
 
 ## Generalized Linear Model 1 (larger index)
