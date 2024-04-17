@@ -4,7 +4,7 @@ format: html
 editor: visual
 ---
 
-## Libraries & Data
+## Libraries
 
 ```{r}
 library(igraph)
@@ -12,7 +12,11 @@ library(RColorBrewer)
 library(here)
 library(tidyverse)
 library(viridis)
+```
 
+## Data
+
+```{r}
 # all hwk data
 hwk_data <- read_csv(here("data/hwkdata.csv"))
 
