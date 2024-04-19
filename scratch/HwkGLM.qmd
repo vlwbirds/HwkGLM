@@ -55,7 +55,13 @@ str(hwk_data)
 
 #view(hwk_data)
 
+#fake data
 hwk_fake <- read_csv(here("data/hwk_fake.csv")) %>% 
+  mutate(Social_Index = as.factor(Social_Index))
+
+#fake data
+
+hwk_fake2 <- read_csv(here("data/hwk_fake_comp1.csv")) %>% 
   mutate(Social_Index = as.factor(Social_Index))
 ```
 
@@ -482,7 +488,7 @@ view(hwk_lek)
 
 ```{r}
 
-model_fake <- glm(Alarm ~ Social_Index, data = hwk_fake, family = binomial(link = "logit"))
+model_fake <- glm(Alarm ~ Social_Index, data = hwk_fake2, family = binomial(link = "logit"))
 summary(model_fake)
 ```
 
@@ -492,18 +498,18 @@ summary(model_fake)
 # Fake Data
 
 # percentages of alarm by social structure
-percent_solo <- mean(hwk_fake$Alarm[hwk_fake$Social_Index == 0], na.rm = TRUE) * 100
-percent_pair <- mean(hwk_fake$Alarm[hwk_fake$Social_Index == 1], na.rm = TRUE) * 100
-percent_comp <- mean(hwk_fake$Alarm[hwk_fake$Social_Index == 2], na.rm = TRUE) * 100
-percent_ssf <- mean(hwk_fake$Alarm[hwk_fake$Social_Index == 3], na.rm = TRUE) * 100
-percent_msf <- mean(hwk_fake$Alarm[hwk_fake$Social_Index == 4], na.rm = TRUE) * 100
+percent_solo <- mean(hwk_fake2$Alarm[hwk_fake$Social_Index == 0], na.rm = TRUE) * 100
+percent_pair <- mean(hwk_fake2$Alarm[hwk_fake$Social_Index == 1], na.rm = TRUE) * 100
+percent_comp <- mean(hwk_fake2$Alarm[hwk_fake$Social_Index == 2], na.rm = TRUE) * 100
+percent_ssf <- mean(hwk_fake2$Alarm[hwk_fake$Social_Index == 3], na.rm = TRUE) * 100
+percent_msf <- mean(hwk_fake2$Alarm[hwk_fake$Social_Index == 4], na.rm = TRUE) * 100
 
 # Sample sizes
-sample_solo <- sum(hwk_fake$Social_Index == 0, na.rm = TRUE)
-sample_pair <- sum(hwk_fake$Social_Index == 1, na.rm = TRUE)
-sample_comp <- sum(hwk_fake$Social_Index == 2, na.rm = TRUE)
-sample_ssf <- sum(hwk_fake$Social_Index == 3, na.rm = TRUE)
-sample_msf <- sum(hwk_fake$Social_Index == 4, na.rm = TRUE)
+sample_solo <- sum(hwk_fake2$Social_Index == 0, na.rm = TRUE)
+sample_pair <- sum(hwk_fake2$Social_Index == 1, na.rm = TRUE)
+sample_comp <- sum(hwk_fake2$Social_Index == 2, na.rm = TRUE)
+sample_ssf <- sum(hwk_fake2$Social_Index == 3, na.rm = TRUE)
+sample_msf <- sum(hwk_fake2$Social_Index == 4, na.rm = TRUE)
 
 # New dataframe for plotting
 plot_data <- data.frame(
