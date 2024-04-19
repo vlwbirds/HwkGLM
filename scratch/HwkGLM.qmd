@@ -54,6 +54,9 @@ str(hwk_data)
 
 
 #view(hwk_data)
+
+hwk_fake <- read_csv(here("data/hwk_fake.csv")) %>% 
+  mutate(Social_Index = as.factor(Social_Index))
 ```
 
 ## Generalized Linear Model 1 (larger index)
@@ -473,4 +476,50 @@ ggplot(combined_data, aes(x = Social_Index, y = Unique_Species_Mean, fill = Spec
 ```{r}
 hwk_lek <- subset(hwk_data, hwk_data$Social_Index == 2)
 view(hwk_lek)
+```
+
+## GLM - Hwk Fake
+
+```{r}
+
+model_fake <- glm(Alarm ~ Social_Index, data = hwk_fake, family = binomial(link = "logit"))
+summary(model_fake)
+```
+
+## Social Gradient Fake Plot
+
+```{r}
+# Fake Data
+
+# percentages of alarm by social structure
+percent_solo <- mean(hwk_fake$Alarm[hwk_fake$Social_Index == 0], na.rm = TRUE) * 100
+percent_pair <- mean(hwk_fake$Alarm[hwk_fake$Social_Index == 1], na.rm = TRUE) * 100
+percent_comp <- mean(hwk_fake$Alarm[hwk_fake$Social_Index == 2], na.rm = TRUE) * 100
+percent_ssf <- mean(hwk_fake$Alarm[hwk_fake$Social_Index == 3], na.rm = TRUE) * 100
+percent_msf <- mean(hwk_fake$Alarm[hwk_fake$Social_Index == 4], na.rm = TRUE) * 100
+
+# Sample sizes
+sample_solo <- sum(hwk_fake$Social_Index == 0, na.rm = TRUE)
+sample_pair <- sum(hwk_fake$Social_Index == 1, na.rm = TRUE)
+sample_comp <- sum(hwk_fake$Social_Index == 2, na.rm = TRUE)
+sample_ssf <- sum(hwk_fake$Social_Index == 3, na.rm = TRUE)
+sample_msf <- sum(hwk_fake$Social_Index == 4, na.rm = TRUE)
+
+# New dataframe for plotting
+plot_data <- data.frame(
+ Group = factor(c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive"),
+                levels = c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive")),  
+ Percentage = c(percent_solo, percent_pair, percent_ssf, percent_msf, percent_comp),
+  SampleSize = c(sample_solo, sample_pair, sample_ssf, sample_msf, sample_comp)
+)
+
+# Create a bar plot
+ggplot(plot_data, aes(x = Group, y = Percentage, fill = Group)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = paste("n =", SampleSize)), position = position_dodge(width = 0.9), vjust = -0.5) +
+  labs(title = "Percentage of Positive Reactions by Sociality",
+       y = "Alarm Percentage",
+       x = "Group") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0, 50)) +
+  theme_minimal()
 ```
