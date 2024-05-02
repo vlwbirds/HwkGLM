@@ -486,10 +486,30 @@ view(hwk_lek)
 
 ## GLM - Hwk Fake
 
+find a package in r that's just for logistic regression
+
+standard error may be asking what the differences are between the levels
+
+Which one is different than the other ones – Least means, anova,
+
+Figure out how to change the intercept for each index, p value is relative to the intercept, rotate each as if it's a zero in different colums
+
+different types of test, whether there's an emperical control
+
+post-hoc test tukey test maybe, compare each pair separately, general contrast approach (compare 2,3 to 1,4,5) or (1 to 2,3,4,)
+
+These are the key predictions and hypotheses I have and how to test those, less than all pairwise and compare all groups. 1v2, 2v3, 3v4 etc
+
+In a model fitting approach, i want to find which ones are the most influential (AIC or BIC)
+
 ```{r}
 
-model_fake <- glm(Alarm ~ Social_Index, data = hwk_fake2, family = binomial(link = "logit"))
+model_fake <- glm(Alarm ~ Social_Index, data = hwk_fake, family = binomial(link = "logit"))
 summary(model_fake)
+plot(model_fake)
+
+nova <- anova(model_fake)
+summary(nova)
 ```
 
 ## Social Gradient Fake Plot
@@ -529,3 +549,13 @@ ggplot(plot_data, aes(x = Group, y = Percentage, fill = Group)) +
   scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0, 50)) +
   theme_minimal()
 ```
+
+Query 1 million row data for max and min, parse criteria based on AIC value
+
+need to do it relative to something, will generate a set of candidate models that will generate a range of best model fit of
+
+one set of data for vegetation , one with social, one with both
+
+fourth approach, run them both, figure out seem to be most important social and environmental, and then cross the most significant values from both and run it again
+
+create linear regression for each predictor variable grouped by social index
