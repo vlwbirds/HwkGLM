@@ -45,7 +45,7 @@ hwk_data <- read_csv(here("data/hwkdata.csv")) %>%
   mutate(Veg_can_low = as.numeric(Veg_can_low)) %>% 
   mutate(Veg_can_high = as.numeric(Veg_can_high)) %>% 
   mutate(Rad_Avg_Dense = as.numeric(Rad_Avg_Dense)) %>% 
-  mutate(across(c(Social_Index, hwk, Species, Mid_Vocal, Mid_Behav_2, Mid_Join, Sex), factor))
+  mutate(across(c(Social_Index, hwk, Species, Mid_Vocal, Mid_Behav_2, Mid_Join, Sex, sexID, SppID), factor))
          #across(c(Veg_mid_low, Veg_mid_high, Veg_can_low, Veg_can_high, Rad_Avg_Dense), numeric))
   
 hwk_data$Social_Index [hwk_data$Social_Index == "#N/A"] <- NA
@@ -329,6 +329,7 @@ head(hwk_subset_narm)
 ```{r}
 # subset to only hawk trials
 hwk_subset <- subset(hwk_data, hwk == 1)
+str(hwk_subset)
 
 # Columns to remove
 unwanted_columns <- c("Timestamp_yymmdd_hhmmss","lat","long","obs1","shooter","Shoot_bird_dist","obs2","Obs2_bird_dist","Habitat_Primary","Habitat_Under_Dom1","Habitat_Under_Dom2","Basal Area 10m","Dbh_largest","Tar_Sp","Tar_Sp2","Species","BirdTree","Sex","Group_Type","Audio_React","hwk","msf","Forage_Tree_height","Rand_360_Degree","Rand_360_Dense_avg...35","Rand_360_Dense_avg...36","Pre_Behav","Pre_Substrate","Mid_Vocal","Mid_Vocal_Index","Mid_Behav","Mid_Behav_1","Dive","Hide_Freeze","Mid_Behav_Index","Mid_Behav_2","Mid_Join","Mid_Join_Index1","Mid_Join_Index2","Mid_Substrate","Post_Vocal","Post_Behav","Post_Substrate","Freeze_Time_sec","Post_Dist","Post_Bird_Dense_Avg","Post_Bird_Height","Veg_can_low","Veg_can_high","5m_dense","5mRad_01","5mRad_02","5mRad_03","5mRad_04","5mRad_05","5mRad_06","5mRad_07","5mRad_08","5mRad_09","5mRad_10")
@@ -338,9 +339,6 @@ df_subset <- hwk_subset[, !names(hwk_subset) %in% unwanted_columns]
 
 # remove na
 df_clean <- na.omit(df_subset)
-
-df_numeric <- df_clean %>% 
-  mutate(Social_Index = as.numeric(Social_Index))
 ```
 
 ## GLM - All Independent Vars (individual)
@@ -512,6 +510,8 @@ nova <- anova(model_fake)
 summary(nova)
 ```
 
+figure out a code to establish factor levels Levels package?
+
 ## Social Gradient Fake Plot
 
 ```{r}
@@ -559,3 +559,126 @@ one set of data for vegetation , one with social, one with both
 fourth approach, run them both, figure out seem to be most important social and environmental, and then cross the most significant values from both and run it again
 
 create linear regression for each predictor variable grouped by social index
+
+## All Model Summary
+
+```{r}
+all_models <- read.csv(here("output/all_vars_combined_table.csv"))
+summary(all_models)
+head(all_models)
+min(all_models$p.value)
+```
+
+## All Model Permutations with AIC
+
+This takes a lot of time to run!!!! It runs through 317,000 combinations...and generates a csv with
+
+```{r}
+# List of independent variables (ensure there are no leading or trailing spaces)
+independent_vars <- c("Obs1_bird_dist", "SppID", "sexID", "Flock_size", "Social_Index", "Flight_proximity", 
+                      "Pre_Height", "Veg_dense_under_avg", "Veg_under_height", "Pre_Dense", "Pre_Height", 
+                      "Veg_dense_under_avg", "Veg_under_height", "Pre_Dense", "Veg_mid_low", "Veg_mid_high", 
+                      "Rad_Avg_Dense")
+
+# List to store model outputs
+model_outputs <- list()
+
+# Filter dataframe to include only rows where Pre_Height values are below 10
+df_filtered <- df_clean[df_clean$Pre_Height < 10, ]
+str(df_filtered)
+# Generate all combinations of independent variables
+all_combinations <- lapply(seq_along(independent_vars), function(n) combn(independent_vars, n, simplify = FALSE))
+
+# Flatten the list of combinations
+all_combinations <- unlist(all_combinations, recursive = FALSE)
+
+# Run GLM models for each combination
+for (vars in all_combinations) {
+  formula_string <- paste("Alarm ~", paste(vars, collapse = " + "))
+  model <- glm(as.formula(formula_string), data = df_filtered, family = binomial(link = "logit"))
+  # Extract AIC and other model output
+  model_output <- broom::tidy(model)
+  model_output$AIC <- AIC(model)
+  # Store model output in list
+  model_outputs[[paste(vars, collapse = "_")]] <- model_output
+}
+
+# Combine model outputs into one large table
+combined_table <- bind_rows(model_outputs, .id = "Combination")
+
+# Print the combined table
+print(combined_table)
+
+
+# Define the file path using here()
+file_path <- here("output", "all_model_AIC_table.csv")
+
+# Write the combined table to the CSV file
+write.csv(combined_table, file_path, row.names = FALSE)
+```
+
+### Lowest AIC
+
+```{r}
+# Find the lowest AIC value
+lowest_aic <- min(combined_table$AIC)
+
+# Find the row(s) with AIC values within 2 units of the lowest AIC
+best_AICs <- combined_table %>%
+  filter(AIC <= lowest_aic + 2)
+
+# Print the model(s) with AIC within 2 units of the lowest AIC
+print(best_AICs)
+view(best_AICs)
+```
+
+### Lowest P
+
+```{r}
+best_p <- combined_table %>%
+  filter(p.value == min(p.value))
+print(best_p)
+```
+
+```{r}
+# Find the row(s) with the lowest p-value
+best_models <- combined_table %>%
+  filter(p.value == min(p.value))
+
+# Extract all parameters of the model(s) with the lowest p-value
+best_model_parameters <- lapply(best_models$Combination, function(combination) {
+  model_output <- model_outputs[[combination]]
+  return(model_output)
+})
+
+# Print the parameters of the model(s) with the lowest p-value
+print(best_model_parameters)
+
+```
+
+### Top 100 p-values
+
+```{r}
+
+# Sort the combined table by p-value in ascending order
+sorted_table <- combined_table %>%
+  arrange(p.value)
+
+# Select the top 100 rows with the lowest p-values
+top_100_models <- head(sorted_table, 100)
+
+# Extract all parameters of the top 100 models
+top_100_model_parameters <- lapply(top_100_models$Combination, function(combination) {
+  model_output <- model_outputs[[combination]]
+  # Add combination column to retain information about the model combination
+  model_output$Combination <- combination
+  return(model_output)
+})
+
+# Combine all model parameters into one dataframe
+combined_df <- bind_rows(top_100_model_parameters)
+
+# Print the combined dataframe
+print(combined_df)
+view(combined_df)
+```
