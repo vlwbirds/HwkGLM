@@ -47,22 +47,22 @@ hwk_data <- read_csv(here("data/hwkdata.csv")) %>%
   mutate(Rad_Avg_Dense = as.numeric(Rad_Avg_Dense)) %>% 
   mutate(across(c(Social_Index, hwk, Species, Mid_Vocal, Mid_Behav_2, Mid_Join, Sex, sexID, SppID), factor))
          #across(c(Veg_mid_low, Veg_mid_high, Veg_can_low, Veg_can_high, Rad_Avg_Dense), numeric))
-  
-hwk_data$Social_Index [hwk_data$Social_Index == "#N/A"] <- NA
-hwk_data$Veg_dense_under_avg [hwk_data$Veg_dense_under_avg == "na" ] <- NA
+# to lowercase
+hwk_data$Sex <- tolower(hwk_data$Sex)
+# Replace "#N/A" and "NA" with NA in hwk_data$Social_Index
+hwk_data$Social_Index[hwk_data$Social_Index %in% c("#N/A", "NA")] <- NA
+hwk_data$Veg_dense_under_avg [hwk_data$Veg_dense_under_avg %in% "na" ] <- NA
 str(hwk_data)
-
-
-#view(hwk_data)
+view(hwk_data)
 
 #fake data
 hwk_fake <- read_csv(here("data/hwk_fake.csv")) %>% 
-  mutate(Social_Index = as.factor(Social_Index))
+   mutate(across( c(Social_Index, Group_Type), factor))
 
 #fake data
 
 hwk_fake2 <- read_csv(here("data/hwk_fake_comp1.csv")) %>% 
-  mutate(Social_Index = as.factor(Social_Index))
+  mutate(across( c(Social_Index, Group_Type), factor))
 ```
 
 ## Generalized Linear Model 1 (larger index)
@@ -201,8 +201,8 @@ sample_msf <- sum(hwk_subset$Social_Index == 4, na.rm = TRUE)
 
 # New dataframe for plotting
 plot_data <- data.frame(
- Group = factor(c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive"),
-                levels = c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive")),  
+ Group = factor(c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive Flock"),
+                levels = c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive Flock")),  
  Percentage = c(percent_solo, percent_pair, percent_ssf, percent_msf, percent_comp),
   SampleSize = c(sample_solo, sample_pair, sample_ssf, sample_msf, sample_comp)
 )
@@ -211,9 +211,9 @@ plot_data <- data.frame(
 ggplot(plot_data, aes(x = Group, y = Percentage, fill = Group)) +
   geom_bar(stat = "identity", position = "dodge") +
   geom_text(aes(label = paste("n =", SampleSize)), position = position_dodge(width = 0.9), vjust = -0.5) +
-  labs(title = "Percentage of Positive Reactions by Sociality",
+  labs(title = "Percentage of Alarm Call Reactions by Sociality",
        y = "Alarm Percentage",
-       x = "Group") +
+       x = "Social Group") +
   scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0, 50)) +
   theme_minimal()
 ```
@@ -329,16 +329,27 @@ head(hwk_subset_narm)
 ```{r}
 # subset to only hawk trials
 hwk_subset <- subset(hwk_data, hwk == 1)
-str(hwk_subset)
+# str(hwk_subset)
 
 # Columns to remove
-unwanted_columns <- c("Timestamp_yymmdd_hhmmss","lat","long","obs1","shooter","Shoot_bird_dist","obs2","Obs2_bird_dist","Habitat_Primary","Habitat_Under_Dom1","Habitat_Under_Dom2","Basal Area 10m","Dbh_largest","Tar_Sp","Tar_Sp2","Species","BirdTree","Sex","Group_Type","Audio_React","hwk","msf","Forage_Tree_height","Rand_360_Degree","Rand_360_Dense_avg...35","Rand_360_Dense_avg...36","Pre_Behav","Pre_Substrate","Mid_Vocal","Mid_Vocal_Index","Mid_Behav","Mid_Behav_1","Dive","Hide_Freeze","Mid_Behav_Index","Mid_Behav_2","Mid_Join","Mid_Join_Index1","Mid_Join_Index2","Mid_Substrate","Post_Vocal","Post_Behav","Post_Substrate","Freeze_Time_sec","Post_Dist","Post_Bird_Dense_Avg","Post_Bird_Height","Veg_can_low","Veg_can_high","5m_dense","5mRad_01","5mRad_02","5mRad_03","5mRad_04","5mRad_05","5mRad_06","5mRad_07","5mRad_08","5mRad_09","5mRad_10")
+unwanted_columns <- c("Timestamp_yymmdd_hhmmss","lat","long","obs1","Obs1_bird_dist","shooter","Shoot_bird_dist","obs2","Obs2_bird_dist","Habitat_Primary","Habitat_Under_Dom1","Habitat_Under_Dom2","Basal Area 10m","Dbh_largest","Tar_Sp","Tar_Sp2","Species","BirdTree","Sex","Group_Type","Audio_React","hwk","msf","Forage_Tree_height","Rand_360_Degree","Rand_360_Dense_avg...35","Rand_360_Dense_avg...36","Pre_Behav","Pre_Substrate","Mid_Vocal","Mid_Vocal_Index","Mid_Behav","Mid_Behav_1","Dive","Hide_Freeze","Mid_Behav_Index","Mid_Behav_2","Mid_Join","Mid_Join_Index1","Mid_Join_Index2","Mid_Substrate","Post_Vocal","Post_Behav","Post_Substrate","Freeze_Time_sec","Post_Dist","Post_Bird_Dense_Avg","Post_Bird_Height","Veg_can_low","Veg_can_high","5m_dense","5mRad_01","5mRad_02","5mRad_03","5mRad_04","5mRad_05","5mRad_06","5mRad_07","5mRad_08","5mRad_09","5mRad_10")
 
 # Remove unwanted columns using [ ] notation
 df_subset <- hwk_subset[, !names(hwk_subset) %in% unwanted_columns]
 
-# remove na
+# Replace "#N/A" with NA in the Social_Index column
+df_subset$Social_Index[df_subset$Social_Index == "#N/A"] <- NA
+str(df_subset)
+
+# Use na.omit() to remove rows with missing values
 df_clean <- na.omit(df_subset)
+
+# Check the structure of df_clean
+str(df_clean)
+
+# view data frame
+print(df_clean)
+view(df_clean)
 ```
 
 ## GLM - All Independent Vars (individual)
@@ -504,10 +515,10 @@ In a model fitting approach, i want to find which ones are the most influential 
 
 model_fake <- glm(Alarm ~ Social_Index, data = hwk_fake, family = binomial(link = "logit"))
 summary(model_fake)
-plot(model_fake)
+str(hwk_fake)
 
-nova <- anova(model_fake)
-summary(nova)
+#nova <- anova(model_fake)
+#summary(nova)
 ```
 
 figure out a code to establish factor levels Levels package?
@@ -533,8 +544,8 @@ sample_msf <- sum(hwk_fake2$Social_Index == 4, na.rm = TRUE)
 
 # New dataframe for plotting
 plot_data <- data.frame(
- Group = factor(c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive"),
-                levels = c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive")),  
+ Group = factor(c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive Flock"),
+                levels = c("Solo", "Pair", "Single-species Flock", "Mixed-species Flock", "Competitive Flock")),  
  Percentage = c(percent_solo, percent_pair, percent_ssf, percent_msf, percent_comp),
   SampleSize = c(sample_solo, sample_pair, sample_ssf, sample_msf, sample_comp)
 )
@@ -575,17 +586,15 @@ This takes a lot of time to run!!!! It runs through 317,000 combinations...and g
 
 ```{r}
 # List of independent variables (ensure there are no leading or trailing spaces)
-independent_vars <- c("Obs1_bird_dist", "SppID", "sexID", "Flock_size", "Social_Index", "Flight_proximity", 
-                      "Pre_Height", "Veg_dense_under_avg", "Veg_under_height", "Pre_Dense", "Pre_Height", 
-                      "Veg_dense_under_avg", "Veg_under_height", "Pre_Dense", "Veg_mid_low", "Veg_mid_high", 
-                      "Rad_Avg_Dense")
+independent_vars <- c("SppID", "sexID", "Flock_size", "Social_Index", "Flight_proximity", 
+"Pre_Height", "Veg_dense_under_avg", "Veg_under_height", "Pre_Dense", "Pre_Height", "Veg_dense_under_avg", "Veg_under_height", "Pre_Dense", "Veg_mid_low", "Veg_mid_high","Rad_Avg_Dense")
 
 # List to store model outputs
 model_outputs <- list()
 
 # Filter dataframe to include only rows where Pre_Height values are below 10
 df_filtered <- df_clean[df_clean$Pre_Height < 10, ]
-str(df_filtered)
+#str(df_filtered)
 # Generate all combinations of independent variables
 all_combinations <- lapply(seq_along(independent_vars), function(n) combn(independent_vars, n, simplify = FALSE))
 
@@ -607,7 +616,7 @@ for (vars in all_combinations) {
 combined_table <- bind_rows(model_outputs, .id = "Combination")
 
 # Print the combined table
-print(combined_table)
+# print(combined_table)
 
 
 # Define the file path using here()
@@ -667,18 +676,19 @@ sorted_table <- combined_table %>%
 # Select the top 100 rows with the lowest p-values
 top_100_models <- head(sorted_table, 100)
 
-# Extract all parameters of the top 100 models
+# Extract all parameters of the top 100 models and add the Combination column
 top_100_model_parameters <- lapply(top_100_models$Combination, function(combination) {
   model_output <- model_outputs[[combination]]
-  # Add combination column to retain information about the model combination
+  # Add Combination column to retain information about the model combination
   model_output$Combination <- combination
   return(model_output)
 })
 
-# Combine all model parameters into one dataframe
+# Bind all dataframes in top_100_model_parameters into a single dataframe
 combined_df <- bind_rows(top_100_model_parameters)
 
 # Print the combined dataframe
 print(combined_df)
 view(combined_df)
+
 ```
